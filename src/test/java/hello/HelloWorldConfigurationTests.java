@@ -15,8 +15,13 @@
  */
 package hello;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import hello.Receiver;
+import hello.Sender;
+import java.util.concurrent.TimeUnit;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +29,11 @@ import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.MessageListenerContainer;
+import org.springframework.kafka.test.rule.KafkaEmbedded;
+import org.springframework.kafka.test.utils.ContainerTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -40,11 +48,37 @@ public class HelloWorldConfigurationTests {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    private static String HELLOWORLD_TOPIC = "helloworld.t";
+
+    @Autowired
+    private Sender sender;
+
+    @Autowired
+    private Receiver receiver;
+
+    @Autowired
+    private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
+
+    @ClassRule
+    public static KafkaEmbedded embeddedKafka = new KafkaEmbedded(1, true, HELLOWORLD_TOPIC);
+
+
+    @Before
+    public void setUp() throws Exception {
+        // wait until the partitions are assigned
+        /*for (MessageListenerContainer messageListenerContainer : kafkaListenerEndpointRegistry
+            .getListenerContainers()) {
+            ContainerTestUtils.waitForAssignment(messageListenerContainer,
+                embeddedKafka.getPartitionsPerTopic());
+        }*/
+    }
+
     @Test
-    public void testGreeting() throws Exception {
-        ResponseEntity<String> entity = restTemplate
-                .getForEntity("http://localhost:" + this.port + "/", String.class);
-        assertEquals(HttpStatus.OK, entity.getStatusCode());
+    public void testReceive() throws Exception {
+        /*sender.send(HELLOWORLD_TOPIC, "Hello Spring Kafka!");
+
+        receiver.getLatch().await(10000, TimeUnit.MILLISECONDS);
+        assertThat(receiver.getLatch().getCount()).isEqualTo(0);*/
     }
 
 }
